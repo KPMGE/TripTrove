@@ -1,64 +1,7 @@
-import { CreateHolidayRepository } from '../../../src/data/repositories'
-import { Holiday, Participant } from '../../../src/domain/entities'
-
-const makeFakeHoliday = (): Holiday => ({
-  title: "any title",
-  description: "any description",
-  date: new Date(),
-  location: "any location",
-})
-
-interface CreateHolidayUseCase {
-  execute(holiday: Holiday): Promise<Holiday>
-}
-
-interface CreateParticipantRepository {
-  insertAll(holidayId: number, participants: CreateParticipantRepository.Input): Promise<CreateParticipantRepository.Output>
-}
-export namespace CreateParticipantRepository {
-  export type Input = Participant[]
-  export type Output = (Participant & { id: number })[]
-}
-
-class CreateParticipantRepositoryMock implements CreateParticipantRepository {
-  async insertAll(holidayId: number, participants: CreateParticipantRepository.Input): Promise<CreateParticipantRepository.Output> {
-    return []
-  }
-}
-
-class CreateHolidayRepositoryMock implements CreateHolidayRepository {
-  async create(holiday: CreateHolidayRepository.Input): Promise<CreateHolidayRepository.Output> {
-    return { ...makeFakeHoliday(), id: 1 }
-  }
-}
-
-class CreateHolidayService implements CreateHolidayUseCase {
-  constructor(
-    private readonly holidayRepo: CreateHolidayRepository,
-    private readonly participantRepo: CreateParticipantRepository
-  ) { }
-
-  async execute(holiday: CreateHolidayService.Input): Promise<CreateHolidayService.Output> {
-    const createdHoliday = await this.holidayRepo.create({
-      title: holiday.title,
-      description: holiday.description,
-      date: holiday.date,
-      location: holiday.location
-    })
-
-    const createdParticipants = await this.participantRepo.insertAll(createdHoliday.id, holiday.participants)
-
-    return {
-      ...createdHoliday,
-      participants: []
-    }
-  }
-}
-
-export namespace CreateHolidayService {
-  export type Input = Holiday & { participants: Participant[] }
-  export type Output = Holiday & { id: number, participants: CreateParticipantRepository.Output }
-}
+import { CreateHolidayService } from '../../../src/data/services/create-holiday'
+import { makeFakeHoliday } from '../mocks/entities'
+import { CreateHolidayRepositoryMock } from '../mocks/repositories/create-holiday'
+import { CreateParticipantRepositoryMock } from '../mocks/repositories/create-participant'
 
 type SutTypes = {
   sut: CreateHolidayService,
@@ -72,7 +15,6 @@ const makeSut = (): SutTypes => {
   const sut = new CreateHolidayService(holidayRepo, participantRepo)
   return { sut, holidayRepo, participantRepo }
 }
-
 
 describe('create-holiday-use-case', () => {
   it('should call the holiday repository with right parameters', async () => {
