@@ -1,5 +1,6 @@
 import { CreateHolidayService } from '../../../src/data/services/create-holiday'
 import { makeFakeHoliday } from '../mocks/entities'
+import { makeFakeParticipant } from '../mocks/entities/participant'
 import { CreateHolidayRepositoryMock } from '../mocks/repositories/create-holiday'
 import { CreateParticipantRepositoryMock } from '../mocks/repositories/create-participant'
 
@@ -30,6 +31,23 @@ describe('create-holiday-use-case', () => {
       date: fakeHoliday.date,
       location: fakeHoliday.location,
     })
+  })
+
+  it('should call the participants repository with right parameters', async () => {
+    const { sut, holidayRepo, participantRepo } = makeSut()
+    const fakeHoliday = makeFakeHoliday()
+
+    participantRepo.insertAll = jest.fn()
+
+    const fakeHolidayId = 1
+    const fakerHolidayReturn = Promise.resolve({ ...fakeHoliday, id: fakeHolidayId})
+    jest.spyOn(holidayRepo, 'create').mockReturnValueOnce(fakerHolidayReturn)
+
+    const fakeParticipants = [makeFakeParticipant(), makeFakeParticipant()]
+
+    await sut.execute({ ...fakeHoliday, participants: fakeParticipants })
+
+    expect(participantRepo.insertAll).toHaveBeenCalledWith(fakeHolidayId, fakeParticipants)
   })
 
   it('should return the created holiday', async () => {
