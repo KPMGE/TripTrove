@@ -1,8 +1,5 @@
+import { CreateHolidayRepository } from '../../../src/data/repositories'
 import { Holiday } from '../../../src/domain/entities'
-
-interface CreateHolidayRepository {
-  create(holiday: Omit<Holiday, 'participants'>): Promise<Holiday>
-}
 
 interface CreateHolidayUseCase {
   execute(holiday: Holiday): Promise<Holiday>
