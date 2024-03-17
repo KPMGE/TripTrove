@@ -1,26 +1,44 @@
 import { CreateHolidayRepository } from '../../../src/data/repositories'
-import { Holiday } from '../../../src/domain/entities'
+import { Holiday, Participant } from '../../../src/domain/entities'
+
+const makeFakeHoliday = (): Holiday => ({
+  title: "any title",
+  description: "any description",
+  date: new Date(),
+  location: "any location",
+})
 
 interface CreateHolidayUseCase {
   execute(holiday: Holiday): Promise<Holiday>
 }
 
-class CreateHolidayRepositoryMock implements CreateHolidayRepository {
-  input = null
-  output = null
+interface CreateParticipantRepository {
+  insertAll(holidayId: number, participants: CreateParticipantRepository.Input): Promise<CreateParticipantRepository.Output>
+}
+export namespace CreateParticipantRepository {
+  export type Input = Participant[]
+  export type Output = (Participant & { id: number })[]
+}
 
-  create(holiday: Omit<Holiday, 'participants'>): Promise<Holiday> {
-    this.input = this.output = holiday
-    return this.output
+class CreateParticipantRepositoryMock implements CreateParticipantRepository {
+  async insertAll(holidayId: number, participants: CreateParticipantRepository.Input): Promise<CreateParticipantRepository.Output> {
+    return []
+  }
+}
+
+class CreateHolidayRepositoryMock implements CreateHolidayRepository {
+  async create(holiday: CreateHolidayRepository.Input): Promise<CreateHolidayRepository.Output> {
+    return { ...makeFakeHoliday(), id: 1 }
   }
 }
 
 class CreateHolidayService implements CreateHolidayUseCase {
   constructor(
-    private readonly holidayRepo: CreateHolidayRepository
+    private readonly holidayRepo: CreateHolidayRepository,
+    private readonly participantRepo: CreateParticipantRepository
   ) { }
 
-  async execute(holiday: Holiday): Promise<Holiday> {
+  async execute(holiday: CreateHolidayService.Input): Promise<CreateHolidayService.Output> {
     const createdHoliday = await this.holidayRepo.create({
       title: holiday.title,
       description: holiday.description,
@@ -28,37 +46,43 @@ class CreateHolidayService implements CreateHolidayUseCase {
       location: holiday.location
     })
 
-    return createdHoliday
+    const createdParticipants = await this.participantRepo.insertAll(createdHoliday.id, holiday.participants)
+
+    return {
+      ...createdHoliday,
+      participants: []
+    }
   }
+}
+
+export namespace CreateHolidayService {
+  export type Input = Holiday & { participants: Participant[] }
+  export type Output = Holiday & { id: number, participants: CreateParticipantRepository.Output }
 }
 
 type SutTypes = {
   sut: CreateHolidayService,
-  repo: CreateHolidayRepositoryMock
+  holidayRepo: CreateHolidayRepositoryMock,
+  participantRepo: CreateParticipantRepositoryMock
 }
 
 const makeSut = (): SutTypes => {
-  const repo = new CreateHolidayRepositoryMock()
-  const sut = new CreateHolidayService(repo)
-  return { sut, repo }
+  const holidayRepo = new CreateHolidayRepositoryMock()
+  const participantRepo = new CreateParticipantRepositoryMock()
+  const sut = new CreateHolidayService(holidayRepo, participantRepo)
+  return { sut, holidayRepo, participantRepo }
 }
 
-const makeFakeHoliday = (): Holiday => ({
-  title: "any title",
-  description: "any description",
-  date: new Date(),
-  location: "any location",
-  participants: []
-})
 
 describe('create-holiday-use-case', () => {
-  it('should call the repository with right parameters', async () => {
-    const { sut, repo } = makeSut()
+  it('should call the holiday repository with right parameters', async () => {
+    const { sut, holidayRepo } = makeSut()
     const fakeHoliday = makeFakeHoliday()
+    holidayRepo.create = jest.fn().mockReturnValueOnce({ ...fakeHoliday, id: 1 })
 
-    await sut.execute(fakeHoliday)
+    await sut.execute({ ...fakeHoliday, participants: [] })
 
-    expect(repo.input).toEqual({
+    expect(holidayRepo.create).toHaveBeenCalledWith({
       title: fakeHoliday.title,
       description: fakeHoliday.description,
       date: fakeHoliday.date,
@@ -66,27 +90,37 @@ describe('create-holiday-use-case', () => {
     })
   })
 
-  it('should return the created holiday from repository', async () => {
-    const { sut, repo } = makeSut()
+  it('should return the created holiday', async () => {
+    const { sut, holidayRepo } = makeSut()
     const fakeHoliday = makeFakeHoliday()
 
-    repo.output = makeFakeHoliday()
+    const fakerHolidayReturn = Promise.resolve({ ...makeFakeHoliday(), id: 1})
+    jest.spyOn(holidayRepo, 'create').mockReturnValueOnce(fakerHolidayReturn)
 
-    const createdHoliday = await sut.execute(fakeHoliday)
+    const createdHoliday = await sut.execute({ ...fakeHoliday, participants: [] })
 
-    const {participants, ...holiday} = createdHoliday
-
-    expect(holiday).toEqual(repo.output)
+    expect(createdHoliday).toEqual({...fakeHoliday, id: 1, participants: [] })
   })
 
-  it('throw if repository throws', async () => {
-    const { sut, repo } = makeSut()
+  it('throw if holiday repository throws', async () => {
+    const { sut, holidayRepo } = makeSut()
     const fakeHoliday = makeFakeHoliday()
 
-    repo.create = () => { throw new Error() }
+    holidayRepo.create = () => { throw new Error() }
 
-    const promise = sut.execute(fakeHoliday)
+    const promise = sut.execute({ ...fakeHoliday, participants: [] })
 
+    await expect(promise).rejects.toThrow()
+  })
+
+  it('throw if participant repository throws', async () => {
+    const { sut, participantRepo } = makeSut()
+    const fakeHoliday = makeFakeHoliday()
+  
+    participantRepo.insertAll = () => { throw new Error() }
+  
+    const promise = sut.execute({ ...fakeHoliday, participants: [] })
+  
     await expect(promise).rejects.toThrow()
   })
 })

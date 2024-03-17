@@ -5,5 +5,4 @@ export type Holiday = {
   description: String
   date: Date
   location: String
-  participants: Participant[]
 }
