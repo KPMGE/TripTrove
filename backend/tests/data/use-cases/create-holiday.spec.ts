@@ -42,16 +42,18 @@ const makeSut = (): SutTypes => {
   return { sut, repo }
 }
 
+const makeFakeHoliday = (): Holiday => ({
+  title: "any title",
+  description: "any description",
+  date: new Date(),
+  location: "any location",
+  participants: []
+})
+
 describe('create-holiday-use-case', () => {
   it('should call the repository with right parameters', async () => {
     const { sut, repo } = makeSut()
-    const fakeHoliday: Holiday = {
-      title: "any title",
-      description: "any description",
-      date: new Date(),
-      location: "any location",
-      participants: []
-    }
+    const fakeHoliday = makeFakeHoliday()
 
     await sut.execute(fakeHoliday)
 
