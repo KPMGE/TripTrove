@@ -10,7 +10,7 @@ class CreateHolidayRepositoryMock implements CreateHolidayRepository {
   output = null
 
   create(holiday: Omit<Holiday, 'participants'>): Promise<Holiday> {
-    this.input = holiday
+    this.input = this.output = holiday
     return this.output
   }
 }
@@ -21,13 +21,14 @@ class CreateHolidayService implements CreateHolidayUseCase {
   ) { }
 
   async execute(holiday: Holiday): Promise<Holiday> {
-    this.holidayRepo.create({
+    const createdHoliday = await this.holidayRepo.create({
       title: holiday.title,
       description: holiday.description,
       date: holiday.date,
       location: holiday.location
     })
-    return null
+
+    return createdHoliday
   }
 }
 
@@ -63,5 +64,18 @@ describe('create-holiday-use-case', () => {
       date: fakeHoliday.date,
       location: fakeHoliday.location,
     })
+  })
+
+  it('should return the created holiday from repository', async () => {
+    const { sut, repo } = makeSut()
+    const fakeHoliday = makeFakeHoliday()
+
+    repo.output = makeFakeHoliday()
+
+    const createdHoliday = await sut.execute(fakeHoliday)
+
+    const {participants, ...holiday} = createdHoliday
+
+    expect(holiday).toEqual(repo.output)
   })
 })
