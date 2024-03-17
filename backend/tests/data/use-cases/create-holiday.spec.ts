@@ -78,4 +78,15 @@ describe('create-holiday-use-case', () => {
 
     expect(holiday).toEqual(repo.output)
   })
+
+  it('throw if repository throws', async () => {
+    const { sut, repo } = makeSut()
+    const fakeHoliday = makeFakeHoliday()
+
+    repo.create = () => { throw new Error() }
+
+    const promise = sut.execute(fakeHoliday)
+
+    await expect(promise).rejects.toThrow()
+  })
 })
