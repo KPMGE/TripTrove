@@ -18,7 +18,7 @@ class CreateHolidayRepositoryMock implements CreateHolidayRepository {
 class CreateHolidayService implements CreateHolidayUseCase {
   constructor(
     private readonly holidayRepo: CreateHolidayRepository
-  ) {}
+  ) { }
 
   async execute(holiday: Holiday): Promise<Holiday> {
     this.holidayRepo.create({
@@ -31,10 +31,20 @@ class CreateHolidayService implements CreateHolidayUseCase {
   }
 }
 
+type SutTypes = {
+  sut: CreateHolidayService,
+  repo: CreateHolidayRepositoryMock
+}
+
+const makeSut = (): SutTypes => {
+  const repo = new CreateHolidayRepositoryMock()
+  const sut = new CreateHolidayService(repo)
+  return { sut, repo }
+}
+
 describe('create-holiday-use-case', () => {
   it('should call the repository with right parameters', async () => {
-    const repo = new CreateHolidayRepositoryMock()
-    const sut = new CreateHolidayService(repo)
+    const { sut, repo } = makeSut()
     const fakeHoliday: Holiday = {
       title: "any title",
       description: "any description",
