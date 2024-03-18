@@ -1,22 +1,7 @@
-import { response } from "express"
-import { Holiday } from "../../../src/domain/entities"
-import { CreateHolidayUseCase } from "../../../src/domain/use-cases"
 import { CreateHolidayController } from "../../../src/presentation/controllers/create-holiday"
-import { HttpResponse, Validator } from "../../../src/presentation/protocols"
-import { makeFakeHoliday } from "../../data/mocks/entities"
+import { HttpResponse } from "../../../src/presentation/protocols"
 import { StatusCodes } from 'http-status-codes'
-
-class CreateHolidayServiceMock implements CreateHolidayUseCase {
-  async execute(holiday: Holiday): Promise<Holiday> {
-    return makeFakeHoliday()
-  }
-}
-
-class ValidatorMock implements Validator {
-  validate(data: any): Error {
-    return null
-  }
-}
+import { CreateHolidayServiceMock, ValidatorMock } from "../mocks"
 
 describe('create-holiday-controller', () => {
   it('should return bad request if validator returns error', async () => {
