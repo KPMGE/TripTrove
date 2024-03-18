@@ -37,4 +37,15 @@ describe('create-holiday-controller', () => {
     expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
     expect(response.body).toEqual(new Error('service error'))
   })
+
+  it('should return ok if on success', async () => {
+    const serviceMock = new CreateHolidayServiceMock()
+    const validatorMock = new ValidatorMock()
+    const sut = new CreateHolidayController(serviceMock, validatorMock)
+
+    const response: HttpResponse = await sut.handle(makeFakeCreateHolidayRequest())
+
+    expect(response.statusCode).toBe(StatusCodes.OK)
+    expect(response.body).toBeDefined()
+  })
 })
