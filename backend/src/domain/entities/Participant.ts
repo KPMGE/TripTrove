@@ -1,4 +1,4 @@
 export type Participant = {
-  id: String
+  id: number
   name: String
 }
