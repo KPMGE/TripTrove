@@ -1,8 +1,8 @@
-import { CreateParticipantRepository } from "../../../data/repositories";
+import { CreateParticipantRepository, GetParticipantsRepository } from "../../../data/repositories";
 import { Participant } from "../../../domain/entities";
 import { pool } from './helper'
 
-export class PgParticipantRepository implements CreateParticipantRepository {
+export class PgParticipantRepository implements CreateParticipantRepository, GetParticipantsRepository {
   private async insertParticipant(holidayId: number, { name }: Participant) {
     const createdParticipant = await pool.query(`
       INSERT INTO participant (name, holiday_id)
@@ -13,14 +13,24 @@ export class PgParticipantRepository implements CreateParticipantRepository {
     return createdParticipant.rows[0]
   }
 
-  async insertAll(holidayId: number, participants: CreateParticipantRepository.Input): Promise<CreateParticipantRepository.Output> {
-    console.log('PARTICIPATNS: ', participants)
+  async insertAll(holidayId: number, participants: Participant[]): Promise<Participant[]> {
+    console.log()
 
     const createdParticipants = await Promise.all(
       participants.map(participant => this.insertParticipant(holidayId, participant))
     )
 
-    console.log('Created participants: ', createdParticipants)
     return createdParticipants
+  }
+
+  async getByHolidayId(holidayId: number): Promise<Participant[]> {
+    const participantsDb = await pool.query(`
+      SELECT name, id
+      FROM participant 
+      WHERE holiday_id = $1
+    `,
+      [holidayId]
+    )
+    return participantsDb.rows
   }
 }
