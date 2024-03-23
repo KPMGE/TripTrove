@@ -26,6 +26,6 @@ export class CreateHolidayService implements CreateHolidayUseCase {
 }
 
 export namespace CreateHolidayService {
-  export type Input = Holiday & { participants: Participant[] }
-  export type Output = Holiday & { id: number, participants: CreateParticipantRepository.Output }
+  export type Input = Omit<Holiday, 'id'> & { participants: Participant[] }
+  export type Output = Holiday & { id: number, participants: Participant[] }
 }
