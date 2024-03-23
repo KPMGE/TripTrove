@@ -5,6 +5,6 @@ export interface CreateHolidayRepository {
 }
 
 export namespace CreateHolidayRepository {
-  export type Input = Omit<Holiday, 'participants'>
-  export type Output = Holiday & { id: number }
+  export type Input = Omit<Holiday, 'participants' | 'id'>
+  export type Output = Holiday
 }
