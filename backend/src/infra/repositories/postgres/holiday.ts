@@ -1,8 +1,13 @@
-import { CreateHolidayRepository, GetHolidaysRepository } from "../../../data/repositories";
+import { CreateHolidayRepository, DeleteHolidayRepository, GetHolidaysRepository } from "../../../data/repositories";
 import { Holiday } from "../../../domain/entities";
 import { pool } from './helper'
 
-export class PgHolidayRepository implements CreateHolidayRepository, GetHolidaysRepository {
+export class PgHolidayRepository 
+implements 
+  CreateHolidayRepository, 
+  GetHolidaysRepository, 
+  DeleteHolidayRepository
+{
   async create({ title, description, date, location }: CreateHolidayRepository.Input): Promise<CreateHolidayRepository.Output> {
     const holidayDb = await pool.query(
       `INSERT INTO holiday (title, description, date, location)
@@ -27,5 +32,9 @@ export class PgHolidayRepository implements CreateHolidayRepository, GetHolidays
       [holidayId]
     )
     return holidaysDb.rows[0]
+  }
+
+  async delete(holidayId: number): Promise<void> {
+    await pool.query(`DELETE FROM holiday WHERE id = $1`, [holidayId])
   }
 }

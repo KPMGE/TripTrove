@@ -1,8 +1,13 @@
-import { CreateParticipantRepository, GetParticipantsRepository } from "../../../data/repositories";
+import { CreateParticipantRepository, DeleteParticipantRepository, GetParticipantsRepository } from "../../../data/repositories";
 import { Participant } from "../../../domain/entities";
 import { pool } from './helper'
 
-export class PgParticipantRepository implements CreateParticipantRepository, GetParticipantsRepository {
+export class PgParticipantRepository 
+implements 
+  CreateParticipantRepository,
+  GetParticipantsRepository,
+  DeleteParticipantRepository
+{
   private async insertParticipant(holidayId: number, { name }: Participant) {
     const createdParticipant = await pool.query(`
       INSERT INTO participant (name, holiday_id)
@@ -32,5 +37,9 @@ export class PgParticipantRepository implements CreateParticipantRepository, Get
       [holidayId]
     )
     return participantsDb.rows
+  }
+
+  async deleteAllByHolidayId(holidayId: number): Promise<void> {
+    await pool.query(`DELETE FROM participant WHERE holiday_id = $1`, [holidayId])
   }
 }
