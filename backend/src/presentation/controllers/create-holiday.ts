@@ -1,4 +1,4 @@
-import { CreateHolidayService } from "../../data/services/create-holiday";
+import { CreateHolidayService } from "../../data/services";
 import { CreateHolidayUseCase } from "../../domain/use-cases";
 import { MissingParamError } from "../errors";
 import { badRequest, ok, serverError } from "../helpers/http";
